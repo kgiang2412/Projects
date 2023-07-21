@@ -1,0 +1,956 @@
+USE [Giang]
+GO
+/****** Object:  StoredProcedure [dbo].[PR_HQ_ImportData_KD_DM_fr_date_to_date]    Script Date: 21-07-2023 1:25:43 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER Procedure [dbo].[PR_HQ_ImportData_KD_DM_fr_date_to_date]
+
+@tungay varchar (50) = ''
+, @denngay varchar (50) = ''
+, @kho varchar (50) = '' 
+, @sale varchar (20) =''
+
+AS
+BEGIN
+	SET NOCOUNT ON;	 
+	declare @fromdate varchar (20) = case when len(isnull(@tungay,'')) >0 then @tungay else '01/01/2023'  end	
+	declare @todate varchar (20) = case when len(isnull(@tungay,'')) >0 then  @denngay else(SELECT convert(varchar, getdate(), 103)) end
+	declare @fromdate_yyyy_mm_dd date = convert (date, @fromdate,103)
+		, @todate_yyyy_mm_dd date = convert (date, @todate,103)
+
+--------------------------------------------------------------------------------------		
+	create table #ReportBCBH
+		(
+		TOTALROWS bigint
+		, tungay nvarchar(250)
+		, denngay nvarchar(250)
+		, appname nvarchar (50)
+		, sophieu nvarchar(250)
+		, soct nvarchar(250)
+		, dhb nvarchar(250)
+		, nam nvarchar(250)
+		, ngay nvarchar(250)
+		, tuan nvarchar(250)
+		, thang nvarchar(250)
+		, mavt nvarchar(250)
+		, external_product_code nvarchar(250)
+		, productname nvarchar(250)
+		, [type] nvarchar(250)
+		, division nvarchar(250)
+		, parentcategory nvarchar(250)
+		, category nvarchar(250)
+		, brand nvarchar(250)
+		, size nvarchar(250)
+		, pack nvarchar(250)
+		, unit2 nvarchar(250)
+		, factor float
+		, bophan nvarchar(250)
+		, dep_name nvarchar(250)
+		, kho_x_ten nvarchar(250)
+		, noidung nvarchar(250)
+		, nvbh_ten nvarchar(250)
+		, nguoinhap nvarchar(250)
+		, ttnhap nvarchar(250)
+		, external_custno nvarchar(250)
+		, custno nvarchar(250)
+		, custname nvarchar(250)
+		, cust_channel nvarchar(250)
+		, cust_group nvarchar(250)
+		, cust_chain nvarchar(250)
+		, address_full nvarchar(250)
+		, ward_name nvarchar(250)
+		, district_name nvarchar(250)
+		, city_name nvarchar(250)		
+		, dongiavon  numeric(18,2)
+		, sotien numeric(18,2)
+		, chietkhau  numeric(18,2)
+		, soluong  numeric(18,2)
+		);
+
+	create table #TenKhoCacChiNhanh
+		(
+			appname varchar (50)
+			, ma nvarchar (100)
+			, ten nvarchar (250)
+		);
+	create table #TonKhoStarTam
+		(
+			appname varchar (50)
+			, ngay date 
+			, tk varchar(20)
+			, kho varchar(20)
+			, mavt varchar(20)
+			, productname nvarchar(250)
+			, unit nvarchar(20)
+			, dauky_sl numeric (18,4)
+			, dauky_st numeric (18,4)
+			, nhap_sl numeric (18,4)
+			, nhap_st numeric (18,4)
+			, xuat_sl numeric (18,4)
+			, xuat_st numeric (18,4)
+			, cuoiky_sl numeric (18,4)
+			, cuoiky_st numeric (18,4)
+		);	
+--------------------------------------------------------------------------------------	
+	if len(isnull(@sale,'')) >0 		
+		begin	
+			if exists ( select * from INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ReportBCBH')
+				begin	
+					delete ReportBCBH where ngay between convert (date,@fromdate,103) and convert (date,@todate,103)
+				end			
+			insert into #ReportBCBH
+			(
+				TOTALROWS 
+				, tungay 
+				, denngay 
+				, appname 
+				, sophieu 
+				, soct 
+				, dhb 
+				, nam 
+				, ngay 
+				, tuan 
+				, thang 
+				, mavt 
+				, external_product_code 
+				, productname 
+				, [type] 
+				, division 
+				, parentcategory 
+				, category 
+				, brand 
+				, size 
+				, pack 
+				, unit2 
+				, factor 
+				, bophan 
+				, dep_name 
+				, kho_x_ten 
+				, noidung 
+				, nvbh_ten 
+				, nguoinhap 
+				, ttnhap 
+				, external_custno 
+				, custno 
+				, custname 
+				, cust_channel 
+				, cust_group 
+				, cust_chain 
+				, address_full 
+				, ward_name 
+				, district_name 
+				, city_name 		
+				, dongiavon  
+				, sotien 
+				, chietkhau  
+				, soluong  
+			)
+			exec [113.161.83.194,60011].[BHDW].dbo.pr_ot_rp_data_live
+				@tungay= @fromdate
+				, @denngay= @todate
+				, @order_by=' soluong asc' 
+				, @sum='sotien, chietkhau, soluong'
+				, @group_by=
+					'appname
+					, sophieu
+					, soct
+					, dhb
+					, nam
+					, ngay
+					, tuan
+					, thang
+					, mavt
+					, external_product_code
+					, productname
+					, type
+					, division
+					, parentcategory
+					, category
+					, brand
+					, size
+					, pack
+					, unit2
+					, factor
+					, bophan
+					, dep_name
+					, kho_x_ten
+					, noidung
+					, nvbh_ten
+					, nguoinhap
+					, ttnhap
+					, external_custno
+					, custno
+					, custname
+					, cust_channel
+					, cust_group
+					, cust_chain
+					, address_full
+					, ward_name
+					, district_name
+					, city_name
+					, dongia_g'
+				, @page_offset='-1'
+				, @page_size='-1'
+				, @where=' ';	
+			
+			set datefirst 1
+			insert into ReportBCBH
+			select 	
+				a.TOTALROWS
+				, a.tungay
+				, a.denngay
+				, a.appname
+				, a.sophieu
+				, a.soct
+				, a.dhb
+				, a.nam
+				, convert (date, a.ngay,103)
+				, case when datepart(year, convert(date,a.ngay,103)) = 2022 then datepart(wk, convert(date,a.ngay,103))
+					when (convert(date,a.ngay,103) = '2023/01/01') then 53
+					when datepart(year, convert(date,a.ngay,103)) = 2023 then datepart(wk, convert(date,a.ngay,103)) - 1
+					else datepart(wk, convert(date,a.ngay,103)) end as tuan
+				, a.thang
+				, a.mavt
+				, a.external_product_code
+				, a.productname
+				, a.[type]
+				, a.division
+				, a.parentcategory
+				, a.category
+				, a.brand
+				, a.size
+				, a.pack
+				, a.unit2
+				, a.bophan
+				, a.dep_name
+				, a.kho_x_ten
+				, a.noidung
+				, a.nvbh_ten
+				, a.nguoinhap
+				, a.ttnhap
+				, a.external_custno
+				, a.custno
+				, a.custname
+				, a.cust_channel
+				, a.cust_group
+				, a.cust_chain
+				, a.address_full
+				, a.ward_name
+				, a.district_name
+				, a.city_name
+				, a.dongiavon
+				, a.sotien
+				, a.chietkhau
+				, case when a.appname = 'HN' and a.external_product_code in ('HH020102','HH020103','HH020104') 
+					then (a.soluong * a.factor) -- Vì lý do các mã XX tiệt trùng của HN bị map sai unit chuyển đổi
+					else a.soluong end as soluong
+			from #ReportBCBH a 			 
+			left outer join #ReportBCBH b 
+			on  a.sophieu = b.soct  and a.dhb = b.dhb	
+			left outer join (select distinct 'HCM'+so_phieu+convert (nvarchar(255),ngay,103)+so_don_hang as [key] from [Sharepoint].[dbo].[SP_HO_DoanhThuThuongMai]) c
+			on concat(a.appname, a.sophieu,a.ngay,a.dhb) = c.[key]
+			left outer join (select distinct 'BL'+so_phieu+convert (nvarchar(255),ngay,103) as [key] from [Sharepoint].[dbo].[SP_BL_DoanhThuThuongMai]) d
+			on concat(a.appname, a.sophieu,a.ngay) = d.[key]
+			left outer join (select distinct 'HN'+so_phieu+convert (nvarchar(255),ngay,103) as [key] from [Sharepoint].[dbo].[SP_HN_DoanhThuThuongMai]) e
+			on concat(a.appname, a.sophieu,a.ngay) = e.[key]
+			left outer join (select distinct 'TH'+so_phieu+convert (nvarchar(255),ngay,103) as [key] from [Sharepoint].[dbo].[SP_TH_DoanhThuThuongMai]) th
+			on concat(a.appname, a.sophieu,a.ngay) = th.[key]
+			where  b.soct is null and a.sophieu not like 'DH%' and a.sophieu not like 'DC%'  
+				and 
+				(
+						(a.appname = 'BL'  and  a.external_custno not in ( 'NV0010102' , '00462'))
+					or (a.appname = 'HCM'  and a.external_custno not in ( '000110' , '000288', '000319', '000368'))
+					or (a.appname = 'HN'  and a.external_custno not in ( '00322' , 'NCC0117'))
+					or (a.appname = 'TH'  and a.external_custno not in ('000011'))
+				) 
+				and c.[key] is null
+				and d.[key] is null
+				and e.[key] is null
+				and th.[key] is null
+				--and a.nvbh_ten not like N'%Nguyễn Thị Bảo Trúc'
+			order by convert(int,a.nam), a.ngay ASC ;
+			
+			
+		end			
+--------------------------------------------------------------------------------------	
+	else
+		begin
+			if len(isnull(@kho,'')) >0 						
+				begin
+					if exists ( select * from INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'TonKhoStar')
+						begin
+							delete TonKhoStar 
+								where TonKhoStar.ngay between convert (date, @fromdate,103) and convert(date, @todate,103)												 
+						end
+					insert into #TenKhoCacChiNhanh
+					select 'HCM' as appname, ma,ten from [113.161.83.194,60010].[BAHUAN2022].dbo.segments where segment = 'KHO'
+					union all
+					select 'TH' as appname, ma,ten from [113.161.83.194,60010].[BAHUANTH].dbo.segments where segment = 'KHO'
+					union all
+					select 'HN' as appname, ma,ten from [113.161.83.194,60010].[BAHUANHNKIEMTOAN].dbo.segments where segment = 'KHO'
+					union all
+					select 'BL' as appname, ma,ten from [113.161.83.194,60010].[BAHUANBLTHUE].dbo.segments where segment = 'KHO'
+					while @fromdate_yyyy_mm_dd <= @todate_yyyy_mm_dd -- tạo biến để chạy từng ngày từ @tungay đến @denngay
+					begin
+						declare @ngay varchar (20) = convert(varchar(20), @fromdate_yyyy_mm_dd, 103)-- tạo biến chứa giá trị ngày để update vào bảng
+						insert into #TonKhoStarTam
+							(
+								tk 
+							, kho 
+							, mavt 
+							, productname 
+							, unit 
+							, dauky_sl
+							, dauky_st 
+							, nhap_sl 
+							, nhap_st 
+							, xuat_sl 
+							, xuat_st 
+							, cuoiky_sl 
+							, cuoiky_st 
+							)
+						exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho
+							@tungay= @ngay
+							, @denngay= @ngay;			
+						update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+						update #TonKhoStarTam set appname = 'HCM' where appname is null	
+						insert into #TonKhoStarTam -- add ton kho cua ha noi
+							(
+								tk 
+							, kho 
+							, mavt 
+							, productname 
+							, unit 
+							, dauky_sl
+							, dauky_st 
+							, nhap_sl 
+							, nhap_st 
+							, xuat_sl 
+							, xuat_st 
+							, cuoiky_sl 
+							, cuoiky_st 
+							)
+						exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho_hn
+							@tungay= @ngay
+							, @denngay= @ngay;			
+						update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+						update #TonKhoStarTam set appname = 'HN' where appname is null	
+						insert into #TonKhoStarTam-- add tồn kho của thanh hoa
+							(
+								tk 
+							, kho 
+							, mavt 
+							, productname 
+							, unit 
+							, dauky_sl
+							, dauky_st 
+							, nhap_sl 
+							, nhap_st 
+							, xuat_sl 
+							, xuat_st 
+							, cuoiky_sl 
+							, cuoiky_st 
+							)
+						exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho_th
+							@tungay= @ngay
+							, @denngay= @ngay;			
+						update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+						update #TonKhoStarTam set appname = 'TH' where appname is null		
+						insert into #TonKhoStarTam -- add tồn kho của Bến Lức
+							(
+								tk 
+							, kho 
+							, mavt 
+							, productname 
+							, unit 
+							, dauky_sl
+							, dauky_st 
+							, nhap_sl 
+							, nhap_st 
+							, xuat_sl 
+							, xuat_st 
+							, cuoiky_sl 
+							, cuoiky_st 
+							)
+						exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho_bl
+							@tungay= @ngay
+							, @denngay= @ngay;			
+						update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+						update #TonKhoStarTam set appname = 'BL' where appname is null
+						set @fromdate_yyyy_mm_dd = DATEADD(day, 1, @fromdate_yyyy_mm_dd);--add 1 ngày váo biến @daterun
+					end
+					insert into TonKhoStar
+							(
+							appname
+							, ngay
+							, tk 
+							, kho
+							, ten_kho
+							, mavt 
+							, productname 
+							, unit 
+							, dauky_sl
+							, dauky_st 
+							, nhap_sl 
+							, nhap_st 
+							, xuat_sl 
+							, xuat_st 
+							, cuoiky_sl 
+							, cuoiky_st 
+							, [type]
+							, division
+							, parentcategory
+							, category
+							, size
+							, pack
+							, brand
+							)
+					select 
+						#TonKhoStarTam.appname
+						, #TonKhoStarTam.ngay
+						, #TonKhoStarTam.tk 				
+						, trim(#TonKhoStarTam.kho) 
+						, dbo.vnitouni (b.ten) as ten_kho
+						, #TonKhoStarTam.mavt 
+						, #TonKhoStarTam.productname 
+						, #TonKhoStarTam.unit 
+						, #TonKhoStarTam.dauky_sl
+						, #TonKhoStarTam.dauky_st 
+						, #TonKhoStarTam.nhap_sl 
+						, #TonKhoStarTam.nhap_st 
+						, #TonKhoStarTam.xuat_sl 
+						, #TonKhoStarTam.xuat_st 
+						, #TonKhoStarTam.cuoiky_sl 
+						, #TonKhoStarTam.cuoiky_st 
+						, DMSPPortal.[type]
+						, DMSPPortal.division
+						, DMSPPortal.parentcategory
+						, DMSPPortal.category
+						, DMSPPortal.size
+						, DMSPPortal.pack
+						, DMSPPortal.brand
+						from #TonKhoStarTam
+					left outer join DMSPPortal 
+					on DMSPPortal.external_product_code = #TonKhoStarTam.mavt
+					left outer join #TenKhoCacChiNhanh b 
+					on #TonKhoStarTam.kho = b.ma and  #TonKhoStarTam.appname = b.appname
+					where #TonKhoStarTam.tk not like '157%'
+				end
+		
+			else
+				begin
+					if exists ( select * from INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ReportBCBH')
+						begin	
+							delete ReportBCBH where ngay between convert (date,@fromdate,103) and convert (date,@todate,103)
+						end			
+					insert into #ReportBCBH
+						(TOTALROWS
+						, tungay
+						, denngay,appname
+						, sophieu
+						, soct
+						, dhb
+						, nam
+						, ngay
+						, tuan
+						, thang
+						, mavt
+						, external_product_code
+						, productname
+						, type
+						, division
+						, parentcategory
+						, category
+						, brand
+						, size
+						, pack
+						, unit2
+						, factor
+						, bophan
+						, dep_name
+						, kho_x_ten
+						, noidung
+						, nvbh_ten
+						, nguoinhap
+						, ttnhap
+						, external_custno
+						, custno
+						, custname
+						, cust_channel
+						, cust_group
+						, cust_chain
+						, address_full
+						, ward_name
+						, district_name
+						, city_name
+						, dongiavon
+						, sotien
+						, chietkhau
+						, soluong
+						)
+					exec [113.161.83.194,60011].[BHDW].dbo.pr_ot_rp_data_live
+						@tungay= @fromdate
+						, @denngay= @todate
+						, @order_by=' soluong asc' 
+						, @sum='sotien, chietkhau, soluong'
+						, @group_by=
+							'appname
+							, sophieu
+							, soct
+							, dhb
+							, nam
+							, ngay
+							, tuan
+							, thang
+							, mavt
+							, external_product_code
+							, productname
+							, type
+							, division
+							, parentcategory
+							, category
+							, brand
+							, size
+							, pack
+							, unit2
+							, factor
+							, bophan
+							, dep_name
+							, kho_x_ten
+							, noidung
+							, nvbh_ten
+							, nguoinhap
+							, ttnhap
+							, external_custno
+							, custno
+							, custname
+							, cust_channel
+							, cust_group
+							, cust_chain
+							, address_full
+							, ward_name
+							, district_name
+							, city_name
+							, dongia_g'
+						, @page_offset='-1'
+						, @page_size='-1'
+						, @where=' ';											
+					set datefirst 1
+					insert into ReportBCBH
+					select 	
+						a.TOTALROWS
+						, a.tungay
+						, a.denngay
+						, a.appname
+						, a.sophieu
+						, a.soct
+						, a.dhb
+						, a.nam
+						, convert (date, a.ngay,103)
+						, case when datepart(year, convert(date,a.ngay,103)) = 2022 then datepart(wk, convert(date,a.ngay,103))
+							when (convert(date,a.ngay,103) = '2023/01/01') then 53
+							when datepart(year, convert(date,a.ngay,103)) = 2023 then datepart(wk, convert(date,a.ngay,103)) - 1
+							else datepart(wk, convert(date,a.ngay,103)) end as tuan
+						, a.thang
+						, a.mavt
+						, a.external_product_code
+						, a.productname
+						, a.[type]
+						, a.division
+						, a.parentcategory
+						, a.category
+						, a.brand
+						, a.size
+						, a.pack
+						, a.unit2
+						, a.bophan
+						, a.dep_name
+						, a.kho_x_ten
+						, a.noidung
+						, a.nvbh_ten
+						, a.nguoinhap
+						, a.ttnhap
+						, a.external_custno
+						, a.custno
+						, a.custname
+						, a.cust_channel
+						, a.cust_group
+						, a.cust_chain
+						, a.address_full
+						, a.ward_name
+						, a.district_name
+						, a.city_name
+						, a.dongiavon
+						, a.sotien 
+						, a.chietkhau
+						, case when a.appname = 'HN' and a.external_product_code in ('HH020102','HH020103','HH020104')
+							then (a.soluong * a.factor)
+							else a.soluong end as soluong
+					from #ReportBCBH a 											
+					left outer join #ReportBCBH b 
+					on  a.sophieu = b.soct  and a.dhb = b.dhb
+					left outer join (select distinct 'HCM'+so_phieu+convert (nvarchar(255),ngay,103)+so_don_hang as [key] from [Sharepoint].[dbo].[SP_HO_DoanhThuThuongMai]) c
+					on concat(a.appname, a.sophieu,a.ngay,a.dhb) = c.[key]
+					left outer join (select distinct 'BL'+so_phieu+convert (nvarchar(255),ngay,103) as [key] from [Sharepoint].[dbo].[SP_BL_DoanhThuThuongMai]) d
+					on concat(a.appname, a.sophieu,a.ngay) = d.[key]
+					left outer join (select distinct 'HN'+so_phieu+convert (nvarchar(255),ngay,103) as [key] from [Sharepoint].[dbo].[SP_HN_DoanhThuThuongMai]) e
+					on concat(a.appname, a.sophieu,a.ngay) = e.[key]
+					left outer join (select distinct 'TH'+so_phieu+convert (nvarchar(255),ngay,103) as [key] from [Sharepoint].[dbo].[SP_TH_DoanhThuThuongMai]) th
+					on concat(a.appname, a.sophieu,a.ngay) = th.[key]
+					where  b.soct is null and a.sophieu not like 'DH%' and a.sophieu not like 'DC%'  
+						and 
+						(
+								(a.appname = 'BL'  and  a.external_custno not in ( 'NV0010102' , '00462'))
+							or (a.appname = 'HCM'  and a.external_custno not in ( '000110' , '000288', '000319', '000368'))
+							or (a.appname = 'HN'  and a.external_custno not in ( '00322' , 'NCC0117'))
+							or (a.appname = 'TH'  and a.external_custno not in ('000011'))
+						) 
+						and c.[key] is null
+						and d.[key] is null
+						and e.[key] is null
+						and th.[key] is null
+						--and a.nvbh_ten not like N'%Nguyễn Thị Bảo Trúc'
+					order by convert(int,a.nam), a.ngay ASC ;
+											
+		------------------------------------------------------------------------------------------------------------
+					--if exists ( select * from INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'TonKhoStar')
+					--	begin
+					--		delete TonKhoStar 
+					--			where TonKhoStar.ngay between convert (date, @fromdate,103) and convert(date, @todate,103)												 
+					--	end
+					--insert into #TenKhoCacChiNhanh
+					--select 'HCM' as appname, ma,ten from [113.161.83.194,60010].[BAHUAN2022].dbo.segments where segment = 'KHO'
+					--union all
+					--select 'TH' as appname, ma,ten from [113.161.83.194,60010].[BAHUANTH].dbo.segments where segment = 'KHO'
+					--union all
+					--select 'HN' as appname, ma,ten from [113.161.83.194,60010].[BAHUANHNKIEMTOAN].dbo.segments where segment = 'KHO'
+					--union all
+					--select 'BL' as appname, ma,ten from [113.161.83.194,60010].[BAHUANBLTHUE].dbo.segments where segment = 'KHO'
+					--while @fromdate_yyyy_mm_dd <= @todate_yyyy_mm_dd -- tạo biến để chạy từng ngày từ @tungay đến @denngay
+					--begin
+					--	declare @ngay1 varchar (20) = convert(varchar(20), @fromdate_yyyy_mm_dd, 103)-- tạo biến chứa giá trị ngày để update vào bảng
+					--	insert into #TonKhoStarTam
+					--		(
+					--			tk 
+					--		, kho 
+					--		, mavt 
+					--		, productname 
+					--		, unit 
+					--		, dauky_sl
+					--		, dauky_st 
+					--		, nhap_sl 
+					--		, nhap_st 
+					--		, xuat_sl 
+					--		, xuat_st 
+					--		, cuoiky_sl 
+					--		, cuoiky_st 
+					--		)
+					--	exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho
+					--		@tungay= @ngay1
+					--		, @denngay= @ngay1;			
+					--	update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+					--	update #TonKhoStarTam set appname = 'HCM' where appname is null	
+					--	insert into #TonKhoStarTam -- add ton kho cua ha noi
+					--		(
+					--			tk 
+					--		, kho 
+					--		, mavt 
+					--		, productname 
+					--		, unit 
+					--		, dauky_sl
+					--		, dauky_st 
+					--		, nhap_sl 
+					--		, nhap_st 
+					--		, xuat_sl 
+					--		, xuat_st 
+					--		, cuoiky_sl 
+					--		, cuoiky_st 
+					--		)
+					--	exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho_hn
+					--		@tungay= @ngay1
+					--		, @denngay= @ngay1;			
+					--	update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+					--	update #TonKhoStarTam set appname = 'HN' where appname is null	
+					--	insert into #TonKhoStarTam-- add tồn kho của thanh hoa
+					--		(
+					--			tk 
+					--		, kho 
+					--		, mavt 
+					--		, productname 
+					--		, unit 
+					--		, dauky_sl
+					--		, dauky_st 
+					--		, nhap_sl 
+					--		, nhap_st 
+					--		, xuat_sl 
+					--		, xuat_st 
+					--		, cuoiky_sl 
+					--		, cuoiky_st 
+					--		)
+					--	exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho_th
+					--		@tungay= @ngay1
+					--		, @denngay= @ngay1;			
+					--	update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+					--	update #TonKhoStarTam set appname = 'TH' where appname is null		
+					--	insert into #TonKhoStarTam -- add tồn kho của Bến Lức
+					--		(
+					--			tk 
+					--		, kho 
+					--		, mavt 
+					--		, productname 
+					--		, unit 
+					--		, dauky_sl
+					--		, dauky_st 
+					--		, nhap_sl 
+					--		, nhap_st 
+					--		, xuat_sl 
+					--		, xuat_st 
+					--		, cuoiky_sl 
+					--		, cuoiky_st 
+					--		)
+					--	exec [113.161.83.194,60010].[BHPORTAL].dbo.pr_star_tonkho_bl
+					--		@tungay= @ngay1
+					--		, @denngay= @ngay1;			
+					--	update #TonKhoStarTam set ngay = convert(varchar, @fromdate_yyyy_mm_dd) where ngay is null;
+					--	update #TonKhoStarTam set appname = 'BL' where appname is null
+					--	set @fromdate_yyyy_mm_dd = DATEADD(day, 1, @fromdate_yyyy_mm_dd);--add 1 ngày váo biến @daterun
+					--end
+					--insert into TonKhoStar
+					--		(
+					--		appname
+					--		, ngay
+					--		, tk 
+					--		, kho
+					--		, ten_kho
+					--		, mavt 
+					--		, productname 
+					--		, unit 
+					--		, dauky_sl
+					--		, dauky_st 
+					--		, nhap_sl 
+					--		, nhap_st 
+					--		, xuat_sl 
+					--		, xuat_st 
+					--		, cuoiky_sl 
+					--		, cuoiky_st 
+					--		, [type]
+					--		, division
+					--		, parentcategory
+					--		, category
+					--		, size
+					--		, pack
+					--		, brand
+					--		)
+					--select 
+					--	#TonKhoStarTam.appname
+					--	, #TonKhoStarTam.ngay
+					--	, #TonKhoStarTam.tk 				
+					--	, trim(#TonKhoStarTam.kho) 
+					--	, dbo.vnitouni (b.ten) as ten_kho
+					--	, #TonKhoStarTam.mavt 
+					--	, #TonKhoStarTam.productname 
+					--	, #TonKhoStarTam.unit 
+					--	, #TonKhoStarTam.dauky_sl
+					--	, #TonKhoStarTam.dauky_st 
+					--	, #TonKhoStarTam.nhap_sl 
+					--	, #TonKhoStarTam.nhap_st 
+					--	, #TonKhoStarTam.xuat_sl 
+					--	, #TonKhoStarTam.xuat_st 
+					--	, #TonKhoStarTam.cuoiky_sl 
+					--	, #TonKhoStarTam.cuoiky_st 
+					--	, DMSPPortal.[type]
+					--	, DMSPPortal.division
+					--	, DMSPPortal.parentcategory
+					--	, DMSPPortal.category
+					--	, DMSPPortal.size
+					--	, DMSPPortal.pack
+					--	, DMSPPortal.brand
+					--	from #TonKhoStarTam
+					--left outer join DMSPPortal 
+					--on DMSPPortal.external_product_code = #TonKhoStarTam.mavt
+					--left outer join #TenKhoCacChiNhanh b 
+					--on #TonKhoStarTam.kho = b.ma and  #TonKhoStarTam.appname = b.appname
+					--where #TonKhoStarTam.tk not like '157%'
+------------------------dmkh sap---------					
+					drop table [dbo].[DMKH_SAP]
+					select  a.nhom_doi_tac_kinh_doanh
+							, a.ma_cong_ty
+							, a.to_chuc_ban_hang
+							, a.kenh_ban_hang
+							, a.nhom_hang
+							, a.ma_khach_hang
+							, a.loai_hinh
+							, a.phan_loai_mst_cccd
+							, a.ma_so_thue_cccd
+							, b.phan_loai_partner_function
+							, b.ma_partner_function
+							, b.ten_ngan_partner_function
+							, b.ten_day_du_partner_function
+							, c.so_nha_ten_duong
+							, c.phuong_xa
+							, c.quan_huyen
+							, c.tinh_thanh_pho
+							, c.quoc_gia
+							, c.khu_vuc
+							, c.vung_mien
+							, c.fax_1
+							, c.email_1
+							, c.telephone_1
+							, c.ten_nguoi_lien_he_1
+							, c.fax_2
+							, c.email_2
+							, c.telephone_2
+							, c.ten_nguoi_lien_he_2
+							, c.fax_3
+							, c.email_3
+							, c.telephone_3
+							, c.ten_nguoi_lien_he_3
+							, c.email_theo_nganh
+							, d.phan_nhom_dong_tien
+							, d.phuong_thuc_thanh_toan
+							, d.dieu_khoan_thanh_toan
+							, d.don_vi_tien_te
+							, d.tieu_chi_xac_dinh_tai_khoan_doanh_thu
+							, d.phan_loai_thue_san_pham
+							, d.phan_nhom_kh_1
+							, d.phan_nhom_kh_2
+							, d.phan_nhom_kh_3
+							, c.phuong_thuc_kiem_tra_han_muc_tin_dung
+							, c.gia_tri_han_muc_phe_duyet
+							, c.danh_dau_xoa
+							, d.danh_dau_xoa_role_customer
+							, c.danh_dau_xoa_role_fi_customer
+							, a.ma_cu
+							, c.nguoi_tao
+							, c.transportation_zone
+							, d.source
+							, d.cust_group
+							, d.pod_relevant
+							, case when b.ma_khach_hang is null then N'none role customer'  
+								when c.ma_khach_hang is null then N'none role fi customer' 
+								when d.ma_khach_hang is null then 
+											CONCAT(N'none role customer for channel '
+													, substring(a.kenh_ban_hang
+																,CHARINDEX('- ',a.kenh_ban_hang)+2
+																, len(a.kenh_ban_hang) -CHARINDEX('- ',a.kenh_ban_hang)
+													)
+											)
+								when b.ma_khach_hang is not null and c.ma_khach_hang is not null and d.ma_khach_hang is not null 
+									then N'full' else N'lỗi' end as  role_status_ma_khach_hang
+						into [dbo].[DMKH_SAP]
+						from
+						(
+						select *
+								from Sharepoint..[SP_MDM_Customer_Genaral_Data_SAP] t1
+								where
+									exists (
+										select *
+											from Sharepoint..[SP_MDM_Customer_Genaral_Data_SAP] t2
+											where t1.ma_khach_hang = t2.ma_khach_hang
+											having t1.createdDateTime = max(t2.createdDateTime)			
+									) 
+									 --and (danh_dau_xoa <> 'X' and danh_dau_xoa_role_customer <> 'X' and danh_dau_xoa_role_fi_customer <> 'X') 
+						) a
+						left outer join 
+						(
+						select *
+							from Sharepoint..[SP_MDM_Customer_Partner_Function_SAP] t1
+							where 
+								exists (
+									select *
+										from Sharepoint..[SP_MDM_Customer_Partner_Function_SAP] t2
+										where t1.ma_khach_hang = t2.ma_khach_hang
+										having t1.createdDateTime = max(t2.createdDateTime)			
+								)
+						) b
+						on a.ma_khach_hang = b.ma_khach_hang and a.to_chuc_ban_hang = b.to_chuc_ban_hang and a.kenh_ban_hang = b.kenh_ban_hang
+						left outer join
+						(
+							select distinct 
+									ma_khach_hang
+									, so_nha_ten_duong
+									, phuong_xa
+									, quan_huyen
+									, tinh_thanh_pho
+									, quoc_gia
+									, khu_vuc
+									, vung_mien
+									, fax_1
+									, email_1
+									, telephone_1
+									, ten_nguoi_lien_he_1
+									, fax_2
+									, email_2
+									, telephone_2
+									, ten_nguoi_lien_he_2
+									, fax_3
+									, email_3
+									, telephone_3
+									, ten_nguoi_lien_he_3
+									, email_theo_nganh
+									, phuong_thuc_kiem_tra_han_muc_tin_dung
+									, gia_tri_han_muc_phe_duyet
+									, danh_dau_xoa					
+									, danh_dau_xoa_role_fi_customer					
+									, nguoi_tao
+									, transportation_zone					
+								from Sharepoint..[SP_MDM_Customer_Genaral_Data_SAP] t1
+								where
+									exists (
+										select *
+											from Sharepoint..[SP_MDM_Customer_Genaral_Data_SAP] t2
+											where t1.ma_khach_hang = t2.ma_khach_hang
+											having t1.createdDateTime = max(t2.createdDateTime)			
+									) 					
+						) c
+						on b.ma_partner_function = c.ma_khach_hang
+						left outer join
+						(
+							select distinct 
+									ma_khach_hang
+									, to_chuc_ban_hang
+									, kenh_ban_hang
+									, phan_nhom_dong_tien
+									, phuong_thuc_thanh_toan
+									, dieu_khoan_thanh_toan
+									, don_vi_tien_te
+									, tieu_chi_xac_dinh_tai_khoan_doanh_thu
+									, phan_loai_thue_san_pham
+									, phan_nhom_kh_1
+									, phan_nhom_kh_2
+									, phan_nhom_kh_3
+									, danh_dau_xoa_role_customer
+									, source
+									, cust_group
+									, pod_relevant
+								from Sharepoint..[SP_MDM_Customer_Genaral_Data_SAP] t1
+								where
+									exists (
+										select *
+											from Sharepoint..[SP_MDM_Customer_Genaral_Data_SAP] t2
+											where t1.ma_khach_hang = t2.ma_khach_hang
+											having t1.createdDateTime = max(t2.createdDateTime)
+									)
+						) d
+						on b.ma_partner_function = d.ma_khach_hang and b.to_chuc_ban_hang = d.to_chuc_ban_hang and b.kenh_ban_hang =d.kenh_ban_hang
+					
+					drop table [dbo].[DMVendor_SAP]
+					select *
+						into [dbo].[DMVendor_SAP]
+						from Sharepoint..[SP_MDM_Vendor_Data_SAP] t1
+						where
+							exists (
+								select *
+									from Sharepoint..[SP_MDM_Vendor_Data_SAP] t2
+									where t1.ma_nha_cung_cap = t2.ma_nha_cung_cap
+									having t1.createdDateTime = max(t2.createdDateTime)			
+							) 
+
+					drop table #ReportBCBH
+					drop table #TenKhoCacChiNhanh
+					drop table #TonKhoStarTam
+				end
+		end	  
+End
